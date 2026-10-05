@@ -4,7 +4,8 @@ import datetime
 
 print("\n\nBooting KCC Bank ATM System...")
 
-db_filename = "/Users/mohitkulshreshtha/Desktop/Projects/ATM/atm_database.json"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+db_filename = os.path.join(BASE_DIR, "atm_database.json")
 
 if os.path.exists(db_filename):
     with open(db_filename, 'r') as file:
@@ -171,31 +172,33 @@ while True:
         print("4. Change PIN\n5. Mini Statement\n6. Transfer Fund")
         print("7. Logout / Switch User") 
 
-        choice = int(input("\nSelect an Option : "))
+        choice = input("\nSelect an Option : ").strip()
 
-        if choice == 1:
+        if choice == '1':
             check_balance(account_balance)
 
+        elif choice == '2':
+            try:
+                amount = float(input("Enter withdrawal amount : "))
+                account_balance, total_withdrawn, transaction_history = withdraw_cash(
+                    amount, account_balance, total_withdrawn, daily_limit, transaction_history)
+                users_db[entered_pin]["balance"] = account_balance
+                users_db[entered_pin]["history"] = transaction_history
+                save_database(users_db)
+            except ValueError:
+                print("Invalid input! Please enter a valid number.")
 
-        elif choice == 2:
-            amount = float(input("Enter withdrawal amount : "))
-            account_balance, total_withdrawn, transaction_history = withdraw_cash(
-                amount, account_balance, total_withdrawn, daily_limit, transaction_history)
-            users_db[entered_pin]["balance"] = account_balance
-            users_db[entered_pin]["history"] = transaction_history
-            save_database(users_db)  
+        elif choice == '3':
+            try:
+                amount = float(input("Enter Amount : "))
+                account_balance, transaction_history = deposit_cash(entered_pin, amount, account_balance, transaction_history)
+                users_db[entered_pin]["balance"] = account_balance
+                users_db[entered_pin]["history"] = transaction_history
+                save_database(users_db)
+            except ValueError:
+                print("Invalid input! Please enter a valid number.")
 
-                  
-        elif choice == 3:
-            amount = float(input("Enter Amount : "))
-            account_balance, transaction_history = deposit_cash(entered_pin, amount, account_balance, transaction_history)
-            users_db[entered_pin]["balance"] = account_balance
-            users_db[entered_pin]["history"] = transaction_history
-            save_database(users_db)
-
-
-        elif choice == 4:
-            # FIX: Keep PINs as strings to match dictionary keys in JSON database
+        elif choice == '4':
             previous_pin = input("Enter your Current PIN : ")
             if previous_pin == entered_pin:
                 new_pin = input("Enter New PIN : ")
@@ -204,7 +207,6 @@ while True:
                     user_data = users_db.pop(entered_pin)
                     users_db[new_pin] = user_data
                     entered_pin = new_pin
-                    # FIX: Save the database to persist the new PIN change
                     save_database(users_db)
                     print("\nPIN Updated !!")
                 elif y == 'n':
@@ -214,8 +216,7 @@ while True:
             else:
                 print("\nIncorrect PIN !!")
 
-
-        elif choice == 5:
+        elif choice == '5':
             print("\n--- Mini Statement (Last 5 Transactions) ---")
             if len(transaction_history) == 0:
                 print("No recent transaction!\n")
@@ -223,21 +224,20 @@ while True:
                 for transaction in transaction_history[-5:]:
                     print(transaction)
 
-
-        elif choice == 6:
+        elif choice == '6':
             r_pin = input("Enter Receiver's 4-digit PIN: ")
-            transfer_amount = float(input("Enter Amount to Transfer: "))
+            try:
+                transfer_amount = float(input("Enter Amount to Transfer: "))
+                account_balance, transaction_history, users_db = transfer_funds(
+                    entered_pin, r_pin, transfer_amount, account_balance, transaction_history, users_db
+                )
+                users_db[entered_pin]["balance"] = account_balance
+                users_db[entered_pin]["history"] = transaction_history
+                save_database(users_db)
+            except ValueError:
+                print("Invalid input! Please enter a valid number.")
 
-            account_balance, transaction_history, users_db = transfer_funds(
-                entered_pin, r_pin, transfer_amount, account_balance, transaction_history, users_db
-            )
-            
-            users_db[entered_pin]["balance"] = account_balance
-            users_db[entered_pin]["history"] = transaction_history
-            save_database(users_db)
-
-
-        elif choice == 7:
+        elif choice == '7':
             print(f"\nLogging out {current_user}...")
             print("Please take your card. Thank you for using KCC Bank!")
             break

@@ -1,0 +1,8 @@
+# KCC Bank ATM Simulation
+# This project uses Python's built-in standard library:
+# - json
+# - os
+# - datetime
+#
+# Requirements:
+# Python >= 3.8
